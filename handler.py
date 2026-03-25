@@ -570,13 +570,26 @@ def handler(job):
     output_video_path = None
     logger.info("출력 비디오 검색 중...")
 
+    # Prefer video with audio muxed (contains "-audio" in filename)
     for node_id in videos:
         if videos[node_id]:
-            output_video_path = videos[node_id][0]
-            logger.info(f"노드 {node_id}에서 출력 비디오 발견: {output_video_path}")
+            for vpath in videos[node_id]:
+                if "-audio" in vpath:
+                    output_video_path = vpath
+                    logger.info(f"노드 {node_id}에서 오디오 포함 비디오 발견: {output_video_path}")
+                    break
+        if output_video_path:
             break
-        else:
-            logger.info(f"노드 {node_id}는 비어있음")
+
+    # Fallback: pick first non-empty if no audio version found
+    if not output_video_path:
+        for node_id in videos:
+            if videos[node_id]:
+                output_video_path = videos[node_id][0]
+                logger.info(f"노드 {node_id}에서 출력 비디오 발견: {output_video_path}")
+                break
+            else:
+                logger.info(f"노드 {node_id}는 비어있음")
 
     if not output_video_path:
         logger.error("출력 비디오를 찾을 수 없습니다. 모든 노드가 비어있습니다.")
